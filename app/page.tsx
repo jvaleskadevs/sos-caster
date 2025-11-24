@@ -148,7 +148,6 @@ export default function Home() {
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsSubmitting(true);
     
-    //console.log(data);    
     try {
       await publishCast(data.cast, data.apikey, data.signer);
       toast({
@@ -189,7 +188,6 @@ export default function Home() {
   async function onSubmitWithUser(data: z.infer<typeof UserFormSchema>) {
     setIsSubmitting(true);
 
-    //console.log(data);    
     try {
       await publishCast(data.cast, "", user?.signer_uuid || "");
       toast({
