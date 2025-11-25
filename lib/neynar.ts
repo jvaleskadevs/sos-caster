@@ -64,11 +64,15 @@ export async function publishCast(
 
 export async function fetchNeynarStatus() {
   const url = 'https://api.neynar.com/v2/farcaster/channel/search/?limit=1&q=farcaster';
-  const options = {method: 'GET', headers: {'x-api-key': 'NEYNAR_API_DOCS'}, body: undefined};
+  const options = {
+    method: 'GET', 
+    headers: {'x-api-key': process.env.NEYNAR_SOSCASTER_API_KEY || 'NEYNAR_API_DOCS'}, 
+    body: undefined
+  };
 
   try {
     const response = await fetch(url, options);
-    //console.log(response);
+    console.log(response);
     if (response.ok) return "online";
     return "offline";
   } catch (error) {

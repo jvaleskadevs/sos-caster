@@ -32,7 +32,8 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     setIsClient(true);
     const storedTheme = localStorage.getItem('theme') as Theme | null;
-    const initialTheme = storedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const initialTheme = storedTheme || 
+     (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     setTheme(initialTheme);
   }, []);
 
