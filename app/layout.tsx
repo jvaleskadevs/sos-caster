@@ -16,7 +16,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "...---... SOS CASTER",
+  title: "SOS CASTER",
   description: "Ultra lightweight open source Farcaster client that sends SOS emergency messages.",
 };
 

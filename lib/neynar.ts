@@ -1,6 +1,10 @@
-'use client';
+'use server';
 
-export async function publishCast(cast: string, apikey: string, signer: string) {
+export type CastResult = any;
+
+export async function publishCast(
+  cast: string, apikey: string, signer: string
+): Promise<CastResult | undefined> {
   const message = cast || '...---... ...---... ...---... ...---...\n' +
       '\n' +
       "Don't worry, it is a test SOS message. No one is in danger (here).\n" +
@@ -8,13 +12,14 @@ export async function publishCast(cast: string, apikey: string, signer: string) 
       ' ...---... ...---... ...---... ...---...'
   ;
 
-  const apiKey = apikey || process.env.NEXT_PUBLIC_NEYNAR_SOSCASTER_API_KEY;
+  const apiKey = apikey || process.env.NEYNAR_SOSCASTER_API_KEY;
   const signerUuid = signer || process.env.BOT_SIGNER_UUID;
   //const channelId = channel ?? process.env.CHANNEL_ID ?? '';
 
   if (!apiKey || !signerUuid) {
     console.error('Missing required API key and/or signer.');
     throw new Error('Invalid configuration error for publishing cast.');
+    return undefined;
   }
   
   const options = {
@@ -44,14 +49,17 @@ export async function publishCast(cast: string, apikey: string, signer: string) 
       console.error('Neynar API Error:', response.status, errorBody);
       throw new Error(
       `Failed to publish cast: ${response.status}-${errorBody.message || 'Unknown error'}`);
+      return undefined;
     }
 
     const result = await response.json();
     console.log('Cast published successfully:', result);
+    return result;
   } catch (err) {
     console.error('Error publishing cast:', err);
     throw err;
   }
+  return undefined;
 }
 
 export async function fetchNeynarStatus() {
@@ -60,7 +68,7 @@ export async function fetchNeynarStatus() {
 
   try {
     const response = await fetch(url, options);
-    console.log(response);
+    //console.log(response);
     if (response.ok) return "online";
     return "offline";
   } catch (error) {

@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import Image from "next/image";
-import { fetchNeynarStatus, publishCast } from "@/lib/neynar";
+import { CastResult, fetchNeynarStatus, publishCast } from "@/lib/neynar";
 import { Heart } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import { NeynarAuthButton, useNeynarContext } from "@neynar/react";
@@ -32,6 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox"; 
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { RecentCasts } from '@/components/RecentCasts';
 import { ServiceStatus } from '@/components/ServiceStatus';
 
 const STORAGE_KEY = 'sos-cast-storage';
@@ -99,7 +100,6 @@ const UserFormSchema = z.object({
     })
 })
 
-
 type ServiceStatusType = "online" | "offline" | "maintenance" | "degraded";
 
 export default function Home() {
@@ -107,6 +107,7 @@ export default function Home() {
   const [showSignerField, setShowSignerField] = useState<boolean>(true);
   const [neynarStatus, setNeynarStatus] = useState<ServiceStatusType>("offline");
   const [farcasterStatus, setFarcasterStatus] = useState<ServiceStatusType>("offline");
+  const [recentCasts, setRecentCasts] = useState<CastResult[]>([]);
 
   const { user } = useNeynarContext();
   
@@ -149,7 +150,7 @@ export default function Home() {
     setIsSubmitting(true);
     
     try {
-      await publishCast(data.cast, data.apikey, data.signer);
+      const castResult = await publishCast(data.cast, data.apikey, data.signer);
       toast({
         title: "SOS Cast submitted successfully!",
         description: (
@@ -173,6 +174,7 @@ export default function Home() {
       }
       
       form.resetField("cast");
+      setRecentCasts(prev => [...prev, castResult]);
     } catch (err) {
       console.error("Failed to submit cast:", error);
       toast({
@@ -189,7 +191,7 @@ export default function Home() {
     setIsSubmitting(true);
 
     try {
-      await publishCast(data.cast, "", user?.signer_uuid || "");
+      const castResult = await publishCast(data.cast, "", user?.signer_uuid || "");
       toast({
         title: "SOS Cast submitted successfully!",
         description: (
@@ -200,6 +202,7 @@ export default function Home() {
       });
       
       form.resetField("cast");
+      setRecentCasts(prev => [...prev, castResult]);
     } catch (err) {
       console.error("Failed to submit cast:", error);
       toast({
@@ -214,7 +217,7 @@ export default function Home() {
 
   return (
     <div className="grid grid-rows-[20px_1fr_20px] flex items-center justify-items-center min-h-screen p-8 pb-20 sm:p-20">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
+      <main className="flex flex-col gap-8 row-start-2 items-center">
         <div className="flex flex-row gap-4 row-start-2 items-center">
           {/*
           <Image
@@ -226,12 +229,12 @@ export default function Home() {
             priority
           />
           */}
-          <h1 className="text-5xl w-full text-center">...---... SOS CASTER</h1>
+          <h1 className="text-5xl w-full text-center font-semibold">SOS CASTER</h1>
           <ThemeToggle />
         </div>
         <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
           <li className="mb-2">
-            Get started by setting your neynar apikey and signer.
+            Get started by setting a signer or signing with neynar.
           </li>
           <li>Then, type and press send cast to send your{" "}          
             <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
@@ -277,6 +280,7 @@ export default function Home() {
                     maxLength={1024} 
                     rows={11} 
                     placeholder="Type your SOS emergency message..."
+                    className="md:min-w-[600px]"
                     {...field}
                   /> 
                 </FormControl>
@@ -292,7 +296,7 @@ export default function Home() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full"
+              className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full font-semibold"
             > {/*
               <Image
                 className="invert"
@@ -393,7 +397,7 @@ export default function Home() {
                       Remember Me
                     </FormLabel>
                      <FormDescription>
-                      Save your preferences in browser for next time.
+                      Save your signer in the browser for next time.
                     </FormDescription>
                   </div>
                 </FormItem>
@@ -410,6 +414,8 @@ export default function Home() {
            </div>          
           </form>
         </Form>
+        
+        <RecentCasts casts={recentCasts} />
         
       </main>
       <div className="row-start-3 flex flex-col gap-4 text-xs sm:text-sm md:text-md">
