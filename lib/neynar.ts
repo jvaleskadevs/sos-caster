@@ -62,6 +62,39 @@ export async function publishCast(
   return undefined;
 }
 
+export async function fetchCastByHash(hash: `0x${string}`, apikey: string, viewerFid?: number) {
+  if (!hash) return undefined;  
+
+  const endpoint = `https://api.neynar.com/v2/farcaster/cast/?type=hash&identifier=${hash}&viewer_fid=${viewerFid ?? 3}`;
+  const options = {
+    method: 'GET',
+    headers: {
+      'x-api-key': apikey || (process.env.NEYNAR_SOSCASTER_API_KEY || ""), 
+      'x-neynar-experimental': 'false'
+    },
+    body: undefined
+  };
+
+  try {
+    const response = await fetch(endpoint, options);
+
+    if (!response.ok) {
+      const errorBody = await response.json();
+      console.error('Neynar API Error:', response.status, errorBody);
+      throw new Error(
+      `Failed to fetch cast: ${response.status}-${errorBody.message || 'Unknown error'}`);
+      return undefined;
+    }
+
+    const data = await response.json();
+    console.log('Cast fetched successfully:', data);
+    return data?.cast ?? undefined;
+  } catch (error) {
+    console.error(error);
+  }    
+  return undefined;
+}
+
 export async function fetchNeynarStatus() {
   const url = 'https://api.neynar.com/v2/farcaster/channel/search/?limit=1&q=farcaster';
   const options = {

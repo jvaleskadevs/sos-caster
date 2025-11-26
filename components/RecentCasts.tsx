@@ -1,10 +1,14 @@
+import { useRouter } from "next/navigation";
 import { CastResult } from "@/lib/neynar";
 import { CheckCheck, X } from 'lucide-react';
 
 const CastItem = ({ cast }: { cast: CastResult }) => {
-  //console.log(cast);
+  const router = useRouter();
   return (
-    <div className="rounded-md border shadow-xs px-4 py-4 w-full max-w-[600px]">
+    <div 
+      className="rounded-md border shadow-xs px-4 py-4 w-full max-w-[600px]"
+      onClick={() => router.push("/cast/"+cast.hash)}
+    >
       <p className="mb-1">
         {cast?.cast?.text}
       </p>
