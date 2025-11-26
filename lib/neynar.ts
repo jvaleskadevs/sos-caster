@@ -3,7 +3,7 @@
 export type CastResult = any;
 
 export async function publishCast(
-  cast: string, apikey: string, signer: string
+  cast: string, apikey: string, signer: string, channelId?: string
 ): Promise<CastResult | undefined> {
   const message = cast || '...---... ...---... ...---... ...---...\n' +
       '\n' +
@@ -33,7 +33,7 @@ export async function publishCast(
       signer_uuid: signerUuid, 
       text: message,
       //embeds: [{url: frame}],
-      //channel_id: channelId,
+      channel_id: channelId ?? "",
       //parent: '0xeff1dcc9575ccda19efc5e1dcc7457d253ca86fb'
     })
   };
@@ -72,7 +72,7 @@ export async function fetchNeynarStatus() {
 
   try {
     const response = await fetch(url, options);
-    console.log(response);
+    //console.log(response);
     if (response.ok) return "online";
     return "offline";
   } catch (error) {

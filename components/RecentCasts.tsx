@@ -4,7 +4,7 @@ import { CheckCheck, X } from 'lucide-react';
 const CastItem = ({ cast }: { cast: CastResult }) => {
   //console.log(cast);
   return (
-    <div className="rounded-md border shadow-xs px-4 py-4 max-w-[600px]">
+    <div className="rounded-md border shadow-xs px-4 py-4 w-full max-w-[600px]">
       <p className="mb-1">
         {cast?.cast?.text}
       </p>
