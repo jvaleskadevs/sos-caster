@@ -41,7 +41,7 @@ export async function publishCast(
   const endpoint = `https://api.neynar.com/v2/farcaster/cast`;
 
   try {  
-    console.log('Publishing cast with options:', JSON.stringify(options, null, 2));
+    //console.log('Publishing cast with options:', JSON.stringify(options, null, 2));
     const response = await fetch(endpoint, options);
 
     if (!response.ok) {
@@ -93,6 +93,39 @@ export async function fetchCastByHash(hash: `0x${string}`, apikey: string, viewe
     console.error(error);
   }    
   return undefined;
+}
+
+export async function fetchCastRepliesByHash(hash: `0x${string}`, apikey: string, viewerFid?: number) {
+  if (!hash) return undefined;  
+  
+  const endpoint = `https://api.neynar.com/v2/farcaster/cast/conversation/?reply_depth=2&limit=20&type=hash&identifier=${hash}&viewer_fid=${viewerFid ?? 3}&sort_type=desc_chron`;
+  const options = {
+    method: 'GET',
+    headers: {
+      'x-api-key': apikey || (process.env.NEYNAR_SOSCASTER_API_KEY || ""), 
+      'x-neynar-experimental': 'false'
+    },
+    body: undefined
+  }; 
+  
+  try {
+    const response = await fetch(endpoint, options);
+
+    if (!response.ok) {
+      const errorBody = await response.json();
+      console.error('Neynar API Error:', response.status, errorBody);
+      throw new Error(
+      `Failed to fetch cast conversation: ${response.status}-${errorBody.message || 'Unknown error'}`);
+      return undefined;
+    }
+
+    const data = await response.json();
+    console.log('Cast conversation fetched successfully:', data);
+    return data?.conversation ?? undefined;
+  } catch (error) {
+    console.error(error);
+  }    
+  return undefined;     
 }
 
 export async function fetchNeynarStatus() {

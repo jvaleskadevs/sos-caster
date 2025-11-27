@@ -1,13 +1,15 @@
 import { useRouter } from "next/navigation";
 import { CastResult } from "@/lib/neynar";
-import { CheckCheck, X } from 'lucide-react';
+//import { CheckCheck, X } from 'lucide-react';
+import { CastItem } from "@/components/CastItem";
 
+/*
 const CastItem = ({ cast }: { cast: CastResult }) => {
   const router = useRouter();
   return (
     <div 
       className="rounded-md border shadow-xs px-4 py-4 w-full max-w-[600px]"
-      onClick={() => router.push("/cast/"+cast.hash)}
+      onClick={() => router.push("/cast/"+cast?.cast?.hash)}
     >
       <p className="mb-1">
         {cast?.cast?.text}
@@ -24,8 +26,10 @@ const CastItem = ({ cast }: { cast: CastResult }) => {
     </div>
   );
 }
+*/
 
 export const RecentCasts = ({ casts }: { casts: CastResult[] }) => {
+  const router = useRouter();
   return (
     <div className="w-full flex flex-col justify-center items-center mb-12">
       { casts.length > 0 &&
@@ -33,7 +37,11 @@ export const RecentCasts = ({ casts }: { casts: CastResult[] }) => {
         Recent Casts
       </h3>}
       { (casts ?? []).map((cast: CastResult, i: number) => (
-        <CastItem key={i} cast={cast} />
+        <CastItem 
+          key={i} 
+          castData={cast?.cast} 
+          onClick={() => router.push("/cast/"+cast?.cast?.hash)} 
+        />
       ))}
     </div>
   );
