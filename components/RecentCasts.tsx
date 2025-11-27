@@ -31,7 +31,7 @@ const CastItem = ({ cast }: { cast: CastResult }) => {
 export const RecentCasts = ({ casts }: { casts: CastResult[] }) => {
   const router = useRouter();
   return (
-    <div className="w-full flex flex-col justify-center items-center mb-12">
+    <div className="w-full flex flex-col justify-center items-center mb-12 space-y-4">
       { casts.length > 0 &&
       <h3 className="text-start w-full mb-4">
         Recent Casts

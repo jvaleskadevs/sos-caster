@@ -1,13 +1,18 @@
+import { useRouter } from "next/navigation";
+import { MessageSquareReply } from "lucide-react";
+
 export const CastItem = ({ 
-  castData, isReply = false, onClick = () => {} 
-}: { castData: any; isReply?: boolean, onClick?: () => void }) => {
+  castData, isReply = false, isReplyOfReply = false, onClick = () => {} 
+}: { castData: any; isReply?: boolean, isReplyOfReply?: boolean, onClick?: () => void }) => {
+  const router = useRouter();
+  
   const formatTimestamp = (timestamp: string) => {
     return (timestamp ? new Date(timestamp) : new Date()).toLocaleString();
   };
 
   return ( 
     <div 
-      className={`w-full bg-card rounded-lg shadow-sm border border-border cursor-pointer p-6 \${isReply ? 'ml-4 mt-4' : ''}`} 
+      className={`w-full bg-card rounded-lg shadow-sm border border-border cursor-pointer p-6 ${isReplyOfReply ? 'ml-6 mt-6' : ''}`} 
       onClick={onClick}
     >
       {/* Author section */}
@@ -33,7 +38,7 @@ export const CastItem = ({
       </div>
 
       {/* Channel if present and it is not a reply */}
-      {castData.channel && !isReply && (
+      {(castData.channel && !isReply && !isReplyOfReply) && (
         <div className="mb-4">
           <div className="inline-flex items-center space-x-2 bg-muted px-3 py-1 rounded-full">
             <img
@@ -81,34 +86,45 @@ export const CastItem = ({
       )}
 
       {/* Reactions section */}
-      <div className="flex items-center space-x-6 pt-4 border-t border-border">
-        <div className="flex items-center space-x-1 text-muted-foreground">
-          <span className="text-sm">
-            {castData.replies?.count || 0} replies
-          </span>
+      <div className="flex items-center justify-between pt-4 border-t border-border">
+        <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-1 text-muted-foreground">
+            <span className="text-sm">
+              {castData.replies?.count || 0} replies
+            </span>
+          </div>
+          
+          <div className="flex items-center space-x-1 text-muted-foreground">
+            <span className="text-sm">
+              {castData.reactions?.likes_count || 0} likes
+            </span>
+          </div>
+          
+          <div className="flex items-center space-x-1 text-muted-foreground">
+            <span className="text-sm">
+              {castData.reactions?.recasts_count || 0} recasts
+            </span>
+          </div>
         </div>
-        
-        <div className="flex items-center space-x-1 text-muted-foreground">
-          <span className="text-sm">
-            {castData.reactions?.likes_count || 0} likes
-          </span>
-        </div>
-        
-        <div className="flex items-center space-x-1 text-muted-foreground">
-          <span className="text-sm">
-            {castData.reactions?.recasts_count || 0} recasts
-          </span>
-        </div>
+        {/* Reply button */}
+        {!isReplyOfReply &&
+        <button
+          onClick={(e) => { e.stopPropagation(); router.push(`/home?parent=${castData.hash}`)}}
+          className="flex items-center space-x-1 px-3 py-1 text-sm text-muted-foreground/60 hover:text-foreground hover:bg-muted rounded-md transition-colors"
+        >
+          <MessageSquareReply />          
+        </button>}
       </div>
 
       {/* Parent cast if this is a reply */}
-      {castData.parent_hash && castData.parent_author && !isReply && (
+      {/*
+      {(castData.parent_hash && castData.parent_author && (isReply || isReplyOfReply)) && (
         <div className="mt-4 pt-4 border-t border-border">
           <div className="text-sm text-muted-foreground mb-2">
-            Replying to @{castData.parent_author.username}
+            Replying to @{castData.parent_author.fid}
           </div>
         </div>
-      )}
+      )}*/}
     </div>
   );
 }

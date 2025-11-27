@@ -3,7 +3,7 @@
 export type CastResult = any;
 
 export async function publishCast(
-  cast: string, apikey: string, signer: string, channelId?: string
+  cast: string, apikey: string, signer: string, channelId?: string, parentHash?: string
 ): Promise<CastResult | undefined> {
   const message = cast || '...---... ...---... ...---... ...---...\n' +
       '\n' +
@@ -33,8 +33,8 @@ export async function publishCast(
       signer_uuid: signerUuid, 
       text: message,
       //embeds: [{url: frame}],
-      channel_id: channelId ?? "",
-      //parent: '0xeff1dcc9575ccda19efc5e1dcc7457d253ca86fb'
+      channel_id: (channelId && !parentHash) ? channelId : undefined,
+      parent: parentHash ?? undefined
     })
   };
   

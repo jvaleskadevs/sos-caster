@@ -95,7 +95,14 @@ export default function Cast() {
               </h2>
               <div className="space-y-4">
                 {castData.cast.direct_replies.map((reply: any) => (
-                  <CastItem key={reply.hash} castData={reply} isReply={true} />
+                  <div key={reply.hash} className="space-y-4">
+                    <CastItem key={reply.hash} castData={reply} isReply={true} />
+                    {reply?.direct_replies && reply.direct_replies.length > 0 && (
+                      reply.direct_replies.map((replyOfReply: any) => (
+                        <CastItem key={replyOfReply.hash} castData={replyOfReply} isReplyOfReply={true} />
+                      )))}
+                    <hr className="mr-[6]" />
+                  </div>
                 ))}
               </div>
             </div>

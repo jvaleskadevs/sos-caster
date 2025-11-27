@@ -1,6 +1,7 @@
 "use client"
  
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -33,6 +34,8 @@ import { ServiceStatus } from '@/components/ServiceStatus';
 import { Footer } from "@/components/Footer";
 
 const STORAGE_KEY = 'sos-cast-storage';
+const CASTS_STORAGE_KEY = 'soscaster-casts';
+const allowSaveCasts = true;
 
 const SendCastFormSchema = z.object({
   cast: z
@@ -50,7 +53,7 @@ const SendCastFormSchema = z.object({
     })
     .max(150, {
       message: "Invalid channel name"
-    }).default(""),
+    }).optional().default("none"),
 })
 
 type ServiceStatusType = "online" | "offline" | "maintenance" | "degraded";
@@ -63,12 +66,16 @@ export default function Home() {
   const [userSigner, setUserSigner] = useState<string>("");
   const [userApiKey, setUserApiKey] = useState<string>("");
 
+  const searchParams = useSearchParams();
+  const parentHash = searchParams.get("parent");
+
   const { user } = useNeynarContext();
   
   const form = useForm<z.infer<typeof SendCastFormSchema>>({
     resolver: zodResolver(SendCastFormSchema),
     defaultValues: {
-      cast: ""
+      cast: "",
+      channel: ""
     }
   });
   const error = false;
@@ -80,6 +87,11 @@ export default function Home() {
         const storedData = JSON.parse(storageItem);
         if (storedData?.signer) setUserSigner(storedData.signer);
         if (storedData?.apikey) setUserApiKey(storedData.apikey);
+      }
+      const castsStorageItem = localStorage.getItem(CASTS_STORAGE_KEY);
+      if (castsStorageItem) {
+        const storedCasts = JSON.parse(castsStorageItem);
+        if (storedCasts?.casts && storedCasts.casts.length > 0) setRecentCasts(storedCasts.casts);
       }
     } catch (error) {
       console.error("Failed to read data from localStorage:", error);
@@ -104,7 +116,8 @@ export default function Home() {
         data.cast, 
         userApiKey || "", 
         user?.signer_uuid || (userSigner || ""),
-        data.channel || ""
+        data.channel !== "none" ? (data.channel || "") : "",
+        parentHash || "",
       );
       toast({
         title: "SOS Cast submitted successfully!",
@@ -114,6 +127,19 @@ export default function Home() {
           </pre>
         ),
       });
+
+      if (allowSaveCasts) {
+        try {
+          localStorage.setItem(
+            CASTS_STORAGE_KEY, 
+            JSON.stringify({ 
+              casts: [...recentCasts, castResult]
+            })
+          );
+        } catch (error) {
+          console.error("Failed to save cast to localStorage:", error);
+        }
+      }
       
       form.resetField("cast");
       setRecentCasts(prev => [...prev, castResult]);
@@ -161,6 +187,7 @@ export default function Home() {
             onSubmit={form.handleSubmit(onSubmit)} 
             className="w-full space-y-6"
           >
+          { parentHash && 
           <FormField
             control={form.control}
             name="channel"
@@ -174,6 +201,7 @@ export default function Home() {
                   </FormControl>
                   <SelectContent>
                     {/*<SelectItem value="soscaster">soscaster</SelectItem>*/}
+                    <SelectItem value="none">Select a valid channel</SelectItem>
                     <SelectItem value="onchain-blocks">onchain-blocks</SelectItem>
                     <SelectItem value="base">base</SelectItem>
                     <SelectItem value="farcaster">farcaster</SelectItem>
@@ -183,7 +211,7 @@ export default function Home() {
                 <FormMessage />
               </FormItem>
             )}
-          /> 
+          /> }
           <FormField
             control={form.control}
             name="cast"
