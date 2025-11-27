@@ -75,7 +75,7 @@ export default function Home() {
     resolver: zodResolver(SendCastFormSchema),
     defaultValues: {
       cast: "",
-      channel: ""
+      channel: "none"
     }
   });
   const error = false;
@@ -187,7 +187,7 @@ export default function Home() {
             onSubmit={form.handleSubmit(onSubmit)} 
             className="w-full space-y-6"
           >
-          { parentHash && 
+          { !parentHash && 
           <FormField
             control={form.control}
             name="channel"
