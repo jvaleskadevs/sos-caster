@@ -1,7 +1,7 @@
 "use client"
  
 import React, { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -66,6 +66,7 @@ export default function Home() {
   const [userSigner, setUserSigner] = useState<string>("");
   const [userApiKey, setUserApiKey] = useState<string>("");
 
+  const router = useRouter();
   const searchParams = useSearchParams();
   const parentHash = searchParams.get("parent");
 
@@ -87,6 +88,9 @@ export default function Home() {
         const storedData = JSON.parse(storageItem);
         if (storedData?.signer) setUserSigner(storedData.signer);
         if (storedData?.apikey) setUserApiKey(storedData.apikey);
+      } else {
+        console.log(user);
+        if (!user || !user?.signer_uuid) router.push("/login");
       }
       const castsStorageItem = localStorage.getItem(CASTS_STORAGE_KEY);
       if (castsStorageItem) {
