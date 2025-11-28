@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MessageSquareReply } from "lucide-react";
 
@@ -7,18 +6,9 @@ export const CastItem = ({
 }: { castData: any; isReply?: boolean, isReplyOfReply?: boolean, onClick?: () => void }) => {
   const router = useRouter();
   
-  const [fetchedMoreReplies, setFetchedMoreReplies] = useState<boolean>(false);
-  
   const formatTimestamp = (timestamp: string) => {
     return (timestamp ? new Date(timestamp) : new Date()).toLocaleString();
   };
-  
-  const handleFetchMoreReplies = () => {
-    if (!castData.direct_replies || castData.direct_replies.length === 0 && !fetchedMoreReplies) {
-      /// TODO fetch more replies !?
-    }
-    setFetchedMoreReplies(true);
-  }
 
   return ( 
     <div 

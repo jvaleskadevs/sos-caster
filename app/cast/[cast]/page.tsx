@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useNeynarContext } from "@neynar/react";
 import { fetchCastRepliesByHash} from "@/lib/neynar";
 import { CastItem } from "@/components/CastItem";
@@ -18,6 +18,7 @@ export default function Cast() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   
+  const router = useRouter();
   const params = useParams();
   const hash = params.cast as `0x${string}`;
 
@@ -36,10 +37,7 @@ export default function Cast() {
   }, []);
 
   async function fetchCastWithReplies() {
-    if (loading || !hash || (castData && !repliesCursor)) return;
-    console.log(castData);
-    console.log(repliesCursor);
-    
+    if (loading || !hash || (castData && !repliesCursor)) return;    
     setLoading(true);
     try {
       console.log("Fetching cast with hash:", hash);
@@ -129,10 +127,11 @@ export default function Cast() {
               <div className="space-y-4">
                 {castData.cast.direct_replies.map((reply: any) => (
                   <div key={reply.hash} className="space-y-4">
-                    <CastItem key={reply.hash} castData={reply} isReply={true} />
+                    <CastItem key={reply.hash} castData={reply} isReply={true} onClick={() => router.push("/cast/"+reply.hash)} />
+                    {/* Replies of Replies section */}
                     {reply?.direct_replies && reply.direct_replies.length > 0 && (
                       reply.direct_replies.map((replyOfReply: any) => (
-                        <CastItem key={replyOfReply.hash} castData={replyOfReply} isReplyOfReply={true} />
+                        <CastItem key={replyOfReply.hash} castData={replyOfReply} isReplyOfReply={true} onClick={() => router.push("/cast/"+replyOfReply.hash)} />
                       )))}
                     <hr className="mr-[6]" />
                   </div>
