@@ -47,17 +47,30 @@ export default function Cast() {
       const castData = await fetchCastRepliesByHash(hash, userApiKey || "", user?.fid, repliesCursor);
       console.log("Fetched cast:", castData);
       if (castData?.conversation && castData?.conversation?.cast) {
-        setCastData((prev: any) => ({
-          cast:{  
-            ...(castData.conversation.cast), 
-            direct_replies: [...(new Set([
-              ...(prev?.cast?.direct_replies ?? []), 
-              ...(castData?.conversation?.cast?.direct_replies ?? [])
-            ]))]
-          } 
-        }));
+        setCastData((prev: any) => {
+          if (!prev) {
+            return castData.conversation;
+          }
+          
+          const existingReplies = prev?.cast?.direct_replies ?? [];
+          const newReplies = castData?.conversation?.cast?.direct_replies ?? [];
+          const repliesMap = new Map();
+          
+          existingReplies.forEach((reply: any) => {
+            repliesMap.set(reply.hash, reply);
+          });
+          newReplies.forEach((reply: any) => {
+            repliesMap.set(reply.hash, reply);
+          });
+
+          return {
+            cast: {  
+              ...(castData.conversation.cast), 
+              direct_replies: Array.from(repliesMap.values())
+            } 
+          };
         setRepliesCursor(castData?.cursor || "");
-      }
+      })};
     } catch (error) {
       console.error("Failed to fetch cast:", error);
       setError("Failed to load cast");
@@ -114,7 +127,7 @@ export default function Cast() {
                 {castData?.cast?.replies?.count || "No"} replies to your SOS message
               </h2>
               <div className="space-y-4">
-                {castData.cast.direct_replies.map((reply: any) => reply % 2 === 0 ? (
+                {castData.cast.direct_replies.map((reply: any) => (
                   <div key={reply.hash} className="space-y-4">
                     <CastItem key={reply.hash} castData={reply} isReply={true} />
                     {reply?.direct_replies && reply.direct_replies.length > 0 && (
@@ -123,7 +136,7 @@ export default function Cast() {
                       )))}
                     <hr className="mr-[6]" />
                   </div>
-                ): null)}
+                ))}
               </div>
               { (castData?.cast?.replies?.count > 0 && repliesCursor) &&
               <Button
