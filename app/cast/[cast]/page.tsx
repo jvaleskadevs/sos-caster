@@ -6,14 +6,16 @@ import { useNeynarContext } from "@neynar/react";
 import { fetchCastRepliesByHash} from "@/lib/neynar";
 import { CastItem } from "@/components/CastItem";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Button } from "@/components/ui/button";
 import { Footer } from "@/components/Footer";
 
 const STORAGE_KEY = 'sos-cast-storage';
 
 export default function Cast() {
   const [castData, setCastData] = useState<any>(null);
+  const [repliesCursor, setRepliesCursor] = useState<string>("");
   const [userApiKey, setUserApiKey] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   
   const params = useParams();
@@ -33,22 +35,40 @@ export default function Cast() {
     }
   }, []);
 
-  useEffect(() => {
-    async function fetchCast() {
-      setLoading(true);
-      try {
-        console.log("fetching hash:", hash);
-        const castData = await fetchCastRepliesByHash(hash, userApiKey || "", user?.fid);
-        console.log(castData);
-        setCastData(castData);
-      } catch (error) {
-        console.error("Failed to fetch cast:", error);
-        setError("Failed to load cast");
-      } finally {
-        setLoading(false);
+  async function fetchCastWithReplies() {
+    if (loading || !hash || (castData && !repliesCursor)) return;
+    console.log(castData);
+    console.log(repliesCursor);
+    
+    setLoading(true);
+    try {
+      console.log("Fetching cast with hash:", hash);
+      console.log(repliesCursor);
+      const castData = await fetchCastRepliesByHash(hash, userApiKey || "", user?.fid, repliesCursor);
+      console.log("Fetched cast:", castData);
+      if (castData?.conversation && castData?.conversation?.cast) {
+        setCastData((prev: any) => ({
+          cast:{  
+            ...(castData.conversation.cast), 
+            direct_replies: [...(new Set([
+              ...(prev?.cast?.direct_replies ?? []), 
+              ...(castData?.conversation?.cast?.direct_replies ?? [])
+            ]))]
+          } 
+        }));
+        setRepliesCursor(castData?.cursor || "");
       }
+    } catch (error) {
+      console.error("Failed to fetch cast:", error);
+      setError("Failed to load cast");
+    } finally {
+      setLoading(false);
     }
-    if (hash && !castData) fetchCast();
+  }
+
+  // initial fetch
+  useEffect(() => {
+    if (hash && !castData && !loading) fetchCastWithReplies();
   }, [hash]);
 
   if (loading) {
@@ -94,7 +114,7 @@ export default function Cast() {
                 {castData?.cast?.replies?.count || "No"} replies to your SOS message
               </h2>
               <div className="space-y-4">
-                {castData.cast.direct_replies.map((reply: any) => (
+                {castData.cast.direct_replies.map((reply: any) => reply % 2 === 0 ? (
                   <div key={reply.hash} className="space-y-4">
                     <CastItem key={reply.hash} castData={reply} isReply={true} />
                     {reply?.direct_replies && reply.direct_replies.length > 0 && (
@@ -103,8 +123,15 @@ export default function Cast() {
                       )))}
                     <hr className="mr-[6]" />
                   </div>
-                ))}
+                ): null)}
               </div>
+              { (castData?.cast?.replies?.count > 0 && repliesCursor) &&
+              <Button
+                onClick={() => fetchCastWithReplies()}
+                className="text-muted-foreground bg-transparent hover:bg-transparent hover:underline"
+              >
+                See more replies
+              </Button>}
             </div>
           )}
         </div>

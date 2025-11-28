@@ -95,10 +95,10 @@ export async function fetchCastByHash(hash: `0x${string}`, apikey: string, viewe
   return undefined;
 }
 
-export async function fetchCastRepliesByHash(hash: `0x${string}`, apikey: string, viewerFid?: number) {
+export async function fetchCastRepliesByHash(hash: `0x${string}`, apikey: string, viewerFid?: number, cursor?: string) {
   if (!hash) return undefined;  
   
-  const endpoint = `https://api.neynar.com/v2/farcaster/cast/conversation/?reply_depth=2&limit=20&type=hash&identifier=${hash}&viewer_fid=${viewerFid ?? 3}&sort_type=desc_chron`;
+  const endpoint = `https://api.neynar.com/v2/farcaster/cast/conversation/?reply_depth=2&limit=20&type=hash&identifier=${hash}&viewer_fid=${viewerFid ?? 3}&sort_type=desc_chron${!!cursor && ('&cursor=' + cursor)}`;
   const options = {
     method: 'GET',
     headers: {
@@ -121,7 +121,7 @@ export async function fetchCastRepliesByHash(hash: `0x${string}`, apikey: string
 
     const data = await response.json();
     console.log('Cast conversation fetched successfully:', data);
-    return data?.conversation ?? undefined;
+    return { conversation: data?.conversation ?? undefined, cursor: data?.cursor ?? "" };
   } catch (error) {
     console.error(error);
   }    

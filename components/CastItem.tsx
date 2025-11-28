@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MessageSquareReply } from "lucide-react";
 
@@ -6,9 +7,18 @@ export const CastItem = ({
 }: { castData: any; isReply?: boolean, isReplyOfReply?: boolean, onClick?: () => void }) => {
   const router = useRouter();
   
+  const [fetchedMoreReplies, setFetchedMoreReplies] = useState<boolean>(false);
+  
   const formatTimestamp = (timestamp: string) => {
     return (timestamp ? new Date(timestamp) : new Date()).toLocaleString();
   };
+  
+  const handleFetchMoreReplies = () => {
+    if (!castData.direct_replies || castData.direct_replies.length === 0 && !fetchedMoreReplies) {
+      /// TODO fetch more replies !?
+    }
+    setFetchedMoreReplies(true);
+  }
 
   return ( 
     <div 
@@ -28,7 +38,12 @@ export const CastItem = ({
               {castData.author.display_name}
             </h3>
             <span className="text-muted-foreground">
-              @{castData.author.username}
+              <a
+                className="hover:underline hover:underline-offset-4"
+                href={`https://farcaster.xyz/${castData.author.username}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >@{castData.author.username}</a>
             </span>
           </div>
           <p className="text-sm text-muted-foreground">
