@@ -88,10 +88,8 @@ export default function Home() {
         const storedData = JSON.parse(storageItem);
         if (storedData?.signer) setUserSigner(storedData.signer);
         if (storedData?.apikey) setUserApiKey(storedData.apikey);
-      } else {
-        console.log(user);
-        if (!user || !user?.signer_uuid) router.push("/login");
-      }
+      } 
+      if (!storageItem && (!user || !user?.signer_uuid)) router.push("/login");
       const castsStorageItem = localStorage.getItem(CASTS_STORAGE_KEY);
       if (castsStorageItem) {
         const storedCasts = JSON.parse(castsStorageItem);
@@ -157,6 +155,15 @@ export default function Home() {
     } finally {
       setIsSubmitting(false);
     }
+  }
+  
+  if (!user && !userSigner) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary">
+        </div>
+      </div>
+    );
   }
 
   return (
