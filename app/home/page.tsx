@@ -7,7 +7,10 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import Image from "next/image";
 import { useNeynarContext } from "@neynar/react";
+import { Address } from "viem";
 import { CastResult, fetchNeynarStatus, publishCast } from "@/lib/neynar";
+import { generatePost } from "@/lib/venice";
+import { isDiamondLabsHolder } from "@/lib/onchain";
 import { Heart } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import {
@@ -65,6 +68,7 @@ export default function Home() {
   const [recentCasts, setRecentCasts] = useState<CastResult[]>([]);
   const [userSigner, setUserSigner] = useState<string>("");
   const [userApiKey, setUserApiKey] = useState<string>("");
+  const [isDiamondHolder, setIsDiamondHolder] = useState<boolean>(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -109,6 +113,17 @@ export default function Home() {
     }
     fetchStatus();
   }, []);
+  
+  useEffect(() => {
+    async function checkDiamondLabsBalance(userAddress: Address) {
+      const isHolder = await isDiamondLabsHolder(userAddress);
+      console.log("isHolder:", isHolder);
+      setIsDiamondHolder(!!isHolder);
+    }
+    if (!isDiamondHolder && user && (user?.verified_addresses as any)?.primary?.eth_address) {
+      checkDiamondLabsBalance((user.verified_addresses as any).primary.eth_address as Address)
+    }
+  }, [user]);
   
   async function onSubmit(data: z.infer<typeof SendCastFormSchema>) {
     setIsSubmitting(true);
@@ -155,6 +170,38 @@ export default function Home() {
     } finally {
       setIsSubmitting(false);
     }
+  }
+  
+  const handleBeepBoopClick = async () => {
+    if (isSubmitting) return;
+    if (!isDiamondHolder) {
+      toast({
+        title: "Only Holders Feature",
+        description: "Must hold 1M $diamondlabs.",
+        variant: "destructive"
+      });      
+      return;
+    };
+    setIsSubmitting(true);
+    
+    try {      
+      const prompt = form.getValues("cast") ?? "";
+      const character = "";
+      
+      const post = await generatePost(prompt, character);
+      form.setValue("cast", post ?? prompt);
+      
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      console.error("Failed to generate post:", error);
+      toast({
+        title: "Beep, Boop failed",
+        description: "Something was wrong. Try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }    
   }
   
   if (!user && !userSigner) {
@@ -245,7 +292,7 @@ export default function Home() {
             )}
           />
           { error && <p className="text-sm text-muted-foreground">{error}</p> }
-          <div className="flex gap-4 items-center flex-col sm:flex-row w-full">
+          <div className="flex gap-3 items-center flex-col sm:flex-row w-full">
             <Button
               type="submit"
               disabled={isSubmitting}
@@ -253,6 +300,10 @@ export default function Home() {
             >
               { isSubmitting ? "Sending..." : "SEND SOS CAST"}
             </Button>
+            <p
+              className="bg-border rounded-full bg-foreground text-background px-4 py-3 hover:opacity-[.7] cursor-pointer"
+              onClick={handleBeepBoopClick}
+            >🤖️</p>
           </div>  
 
           <div className="w-full flex gap-4 sm:gap-6 justify-center items-center mb-8">

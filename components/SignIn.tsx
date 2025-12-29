@@ -95,20 +95,19 @@ export default function SignIn() {
         description: "Signer connected successfully!",
       });
       
-      if (data.allowSavePrefs) {
-        try {
-          localStorage.setItem(
-            STORAGE_KEY, 
-            JSON.stringify({ 
-              signer: data.signer, apikey: data.apikey, allowSavePrefs: data.allowSavePrefs 
-            })
-          );
-        } catch (error) {
-          console.error("Failed to save signer to localStorage:", error);
-        }
-      }
-      
       if (data.signer && data.apikey) {
+        if (data.allowSavePrefs) {
+          try {
+            localStorage.setItem(
+              STORAGE_KEY, 
+              JSON.stringify({ 
+                signer: data.signer, apikey: data.apikey, allowSavePrefs: data.allowSavePrefs 
+              })
+            );
+          } catch (error) {
+            console.error("Failed to save signer to localStorage:", error);
+          }
+        }
         router.push("/home");
         return;
       }
@@ -124,7 +123,8 @@ export default function SignIn() {
     }); 
   }
   
-  async function onSubmitWithUser() {
+  async function onSubmitWithUser(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setIsSubmitting(true);
 
     if (!user) return;
@@ -140,7 +140,7 @@ export default function SignIn() {
   return (
     <Form {...form}>
       <form 
-        onSubmit={form.handleSubmit(user !== null ? onSubmitWithUser : onSubmit)} 
+        onSubmit={user !== null ? (e) => onSubmitWithUser(e) : form.handleSubmit(onSubmit)} 
         className="w-full"
       >
         <div className="min-h-[440] relative space-y-6">
