@@ -1,6 +1,6 @@
 "use client"
  
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -11,7 +11,7 @@ import { Address } from "viem";
 import { CastResult, fetchNeynarStatus, publishCast } from "@/lib/neynar";
 import { generatePost } from "@/lib/venice";
 import { isDiamondLabsHolder } from "@/lib/onchain";
-import { Heart } from 'lucide-react';
+import { Heart, ImageMinus, ImagePlus } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import {
   Form,
@@ -35,6 +35,13 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { RecentCasts } from '@/components/RecentCasts';
 import { ServiceStatus } from '@/components/ServiceStatus';
 import { Footer } from "@/components/Footer";
+//import { ImageUploadInput } from "@/components/ImageUploadInput";
+import dynamic from 'next/dynamic';
+
+const ImageUploadInput = dynamic(
+  () => import('@/components/ImageUploadInput'),
+  { ssr: false }
+);
 
 const STORAGE_KEY = 'sos-cast-storage';
 const CASTS_STORAGE_KEY = 'soscaster-casts';
@@ -62,6 +69,7 @@ const SendCastFormSchema = z.object({
 type ServiceStatusType = "online" | "offline" | "maintenance" | "degraded";
 
 export default function Home() {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [neynarStatus, setNeynarStatus] = useState<ServiceStatusType>("offline");
   const [farcasterStatus, setFarcasterStatus] = useState<ServiceStatusType>("offline");
@@ -69,6 +77,7 @@ export default function Home() {
   const [userSigner, setUserSigner] = useState<string>("");
   const [userApiKey, setUserApiKey] = useState<string>("");
   const [isDiamondHolder, setIsDiamondHolder] = useState<boolean>(false);
+  const [uploadedImageUri, setUploadedImageUri] = useState<string>(''); 
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -135,6 +144,7 @@ export default function Home() {
         user?.signer_uuid || (userSigner || ""),
         data.channel !== "none" ? (data.channel || "") : "",
         parentHash || "",
+        uploadedImageUri || ""
       );
       toast({
         title: "SOS Cast submitted successfully!",
@@ -170,6 +180,58 @@ export default function Home() {
     } finally {
       setIsSubmitting(false);
     }
+  }
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any 
+  const handleUploadImageClick = async (e: any) => {
+    e.stopPropagation();
+    
+    if (uploadedImageUri) {
+      setUploadedImageUri("");
+      toast({
+        title: "Image removed successfully!",
+        description: (
+          <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+            <code className="text-white">...</code>
+          </pre>
+        ),
+      });
+    } else {
+      fileInputRef.current?.click();
+    }
+  }
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any  
+  const handleUploadImage = async (e: any) => {
+    const file = (e as any)?.target?.files?.[0] ?? undefined;
+    if (!file) return;
+    setIsSubmitting(true);
+
+    const imageUri = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(file);
+    });
+    
+    if (!imageUri || typeof imageUri !== "string") {
+      toast({
+        title: "Upload Image failed",
+        description: "Something was wrong. Try again.",
+        variant: "destructive"
+      });  
+      return;    
+    }
+
+    toast({
+      title: "Image upload successfully!",
+      description: (
+        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+          <code className="text-white">...</code>
+        </pre>
+      ),
+    });
+    
+    setUploadedImageUri(imageUri);
+    setIsSubmitting(false);
   }
   
   const handleBeepBoopClick = async () => {
@@ -291,8 +353,32 @@ export default function Home() {
               </FormItem>
             )}
           />
-          { error && <p className="text-sm text-muted-foreground">{error}</p> }
+          { !!error && <p className="text-sm text-muted-foreground">{error}</p> }
+          { !!uploadedImageUri && (
+            <div className="ml-5 flex flex-row gap-2">
+              <Image 
+                src={uploadedImageUri}
+                alt="embedded image miniature"
+                width={20}
+                height={20}
+              />
+              <p className="text-sm text-muted-foreground">Image successfully loaded</p> 
+            </div>
+          )}
           <div className="flex gap-3 items-center flex-col sm:flex-row w-full">
+            <button
+              id="uploadbtn" 
+              type="button"
+              className={"bg-border rounded-full bg-foreground text-background px-4 py-3 hover:opacity-[.7] cursor-pointer"}
+              onClick={handleUploadImageClick}
+              disabled={isSubmitting}
+            >
+              { !!uploadedImageUri ? <ImageMinus /> : <ImagePlus /> }
+            </button>
+            <ImageUploadInput
+              fileInputRef={fileInputRef}
+              onChange={handleUploadImage}
+            />
             <Button
               type="submit"
               disabled={isSubmitting}

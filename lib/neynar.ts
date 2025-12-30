@@ -1,9 +1,11 @@
 'use server';
 
+import { uploadToImgur } from "@/lib/imgur";
+
 export type CastResult = any;
 
 export async function publishCast(
-  cast: string, apikey: string, signer: string, channelId?: string, parentHash?: string
+  cast: string, apikey: string, signer: string, channelId?: string, parentHash?: string, imageUrl?: string
 ): Promise<CastResult | undefined> {
   const message = cast || '...---... ...---... ...---... ...---...\n' +
       '\n' +
@@ -22,6 +24,9 @@ export async function publishCast(
     return undefined;
   }
   
+  const embedUrl = imageUrl?.startsWith("https") ? 
+    imageUrl : await uploadToImgur(imageUrl?.replace("data:image/png;base64,", "") || "");
+  
   const options = {
     method: 'POST',
     headers: {
@@ -32,11 +37,12 @@ export async function publishCast(
     body: JSON.stringify({
       signer_uuid: signerUuid, 
       text: message,
-      //embeds: [{url: frame}],
+      embeds: !!embedUrl ? [{ url: embedUrl }] : undefined,
       channel_id: (channelId && !parentHash) ? channelId : undefined,
       parent: parentHash ?? undefined
     })
   };
+  //console.log(options.body);
   
   const endpoint = `https://api.neynar.com/v2/farcaster/cast`;
 
