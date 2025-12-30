@@ -9,7 +9,7 @@ import Image from "next/image";
 import { useNeynarContext } from "@neynar/react";
 import { Address } from "viem";
 import { CastResult, fetchNeynarStatus, publishCast } from "@/lib/neynar";
-import { generatePost } from "@/lib/venice";
+import { generateImage, generatePost } from "@/lib/venice";
 import { isDiamondLabsHolder } from "@/lib/onchain";
 import { Heart, ImageMinus, ImagePlus } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
@@ -67,6 +67,11 @@ const SendCastFormSchema = z.object({
 })
 
 type ServiceStatusType = "online" | "offline" | "maintenance" | "degraded";
+
+enum BeepBoopMode {
+  TEXT = "text",
+  IMAGE = "image"
+}
 
 export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -234,7 +239,7 @@ export default function Home() {
     setIsSubmitting(false);
   }
   
-  const handleBeepBoopClick = async () => {
+  const handleBeepBoopClick = async (bbMode: BeepBoopMode) => {
     if (isSubmitting) return;
     if (!isDiamondHolder) {
       toast({
@@ -250,8 +255,15 @@ export default function Home() {
       const prompt = form.getValues("cast") ?? "";
       const character = "";
       
-      const post = await generatePost(prompt, character);
-      form.setValue("cast", post ?? prompt);
+      if (bbMode === BeepBoopMode.TEXT) {
+        const post = await generatePost(prompt, character);
+        form.setValue("cast", post ?? prompt);
+      }
+      
+      if (bbMode === BeepBoopMode.IMAGE) {
+        const imageUri = await generateImage(prompt);
+        setUploadedImageUri(imageUri);
+      }      
       
       // eslint-disable-next-line  @typescript-eslint/no-explicit-any
     } catch (error: any) {
@@ -355,14 +367,15 @@ export default function Home() {
           />
           { !!error && <p className="text-sm text-muted-foreground">{error}</p> }
           { !!uploadedImageUri && (
-            <div className="ml-5 flex flex-row gap-2">
+            <div className="ml-3 flex flex-row gap-2 items-center cursor-pointer">
               <Image 
                 src={uploadedImageUri}
                 alt="embedded image miniature"
-                width={20}
-                height={20}
+                width={24}
+                height={24}
               />
               <p className="text-sm text-muted-foreground">Image successfully loaded</p> 
+              <a href={uploadedImageUri} target="_blank" className="opacity-[.67]">👀️</a>
             </div>
           )}
           <div className="flex gap-3 items-center flex-col sm:flex-row w-full">
@@ -388,8 +401,12 @@ export default function Home() {
             </Button>
             <p
               className="bg-border rounded-full bg-foreground text-background px-4 py-3 hover:opacity-[.7] cursor-pointer"
-              onClick={handleBeepBoopClick}
+              onClick={() => handleBeepBoopClick(BeepBoopMode.TEXT)}
             >🤖️</p>
+            <p
+              className="bg-border rounded-full bg-foreground text-background px-4 py-3 hover:opacity-[.7] cursor-pointer"
+              onClick={() => handleBeepBoopClick(BeepBoopMode.IMAGE)}
+            >🎨️</p>
           </div>  
 
           <div className="w-full flex gap-4 sm:gap-6 justify-center items-center mb-8">
